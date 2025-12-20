@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="author" content="Albane Keraudren-Riguidel">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Christmas Card</title>
+    <style>
+        :root {
+            --color-primary: #c41e3a;
+            --color-secondary: #314787;
+            --color-dark-blue: #131d3b;
+            --color-gold: #ffd700;
+            --color-text: #2c3e50;
+            --color-light: #f8f9fa;
+            --color-white: #ffffff;
+            --color-shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Garamond', serif;
+            background: linear-gradient(135deg, var(--color-dark-blue) 0%, var(--color-secondary) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Snowflake animation */
+        @keyframes snowfall {
+            0% {
+                transform: translateY(-10vh) translateX(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        .snowflake {
+            position: fixed;
+            top: -10vh;
+            color: var(--color-white);
+            font-size: 1.5em;
+            pointer-events: none;
+            animation: snowfall linear forwards;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+        }
+
+        .container {
+            perspective: 1200px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .card-wrapper {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            cursor: pointer;
+            align-items: center;
+        }
+
+        .card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+
+        /* Left half (front cover), initially on the right */
+        .card-left {
+            position: absolute;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(135deg, #fff5e6 0%, #ffe6d5 100%);
+            border-radius: 0px 15px 15px 0px;
+            box-shadow: -8px 8px 32px var(--color-shadow), inset 1px 0 0 rgba(0, 0, 0, 0.1);
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 0px;
+            right: 0;
+            z-index: 10;
+            transform-origin: left center;
+        }
+
+        .card.opened .card-left {
+            transform: rotateY(190deg);
+        }
+
+        .card-left-front{
+            border-radius: 0px 15px 15px 0px;
+        }
+
+        .card-left-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 15px 0px 0px 15px;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card-left-front {
+            background: linear-gradient(135deg, #fff5e6 0%, #ffe6d5 100%);
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .card-left-back {
+            background: linear-gradient(135deg, var(--color-white) 0%, var(--color-light) 100%);
+            transform: rotateY(180deg);
+        }
+
+        /*Right half container*/
+        .card-right {
+            position: absolute;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-left: 0;
+        }
+
+        /* Right half (inside) */
+        .card-right-inside {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--color-white) 0%, var(--color-light) 100%);
+            border-radius: 0 15px 15px 0;
+            box-shadow: 8px 8px 32px var(--color-shadow), inset -1px 0 0 rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            text-align: center;
+            color: var(--color-text);
+            gap: 20px;
+            position: relative;
+            margin-left: 0;
+        }
+
+        /* Spine/center line */
+        .card-spine {
+            position: absolute;
+            left: 100%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.1));
+            z-index: 5;
+            pointer-events: none;
+        }
+
+
+        .front-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .gift-icon {
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        h1 {
+            font-size: 28px;
+            color: var(--color-primary);
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .click-hint {
+            font-size: 13px;
+            color: var(--color-secondary);
+            font-style: italic;
+            opacity: 0.8;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 0.8;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* Gift card image styling */
+        .gift-card-image {
+            width: 100%;
+            height: 90%;
+            object-fit: contain;
+            background-color: transparent;
+        }
+
+        .back-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .back-content h2 {
+            font-size: 26px;
+            color: var(--color-primary);
+            margin-bottom: 10px;
+        }
+
+        .back-content p {
+            font-size: 15px;
+            line-height: 1;
+            color: var(--color-text);
+        }
+
+        .gift-preview {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(196, 30, 58, 0.08);
+            border-radius: 8px;
+            border: 1px solid rgba(196, 30, 58, 0.2);
+            margin: 5px 0;
+        }
+
+        .gift-preview-icon {
+            font-size: 32px;
+        }
+
+        .gift-preview-text {
+            text-align: left;
+            flex: 1;
+        }
+
+        .gift-preview-text .label {
+            font-size: 11px;
+            opacity: 0.8;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--color-secondary);
+        }
+
+        .gift-preview-text .value {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--color-primary);
+            margin-top: 2px;
+        }
+
+        @media (max-width: 700px) {
+            .card-wrapper {
+                height: 450px;
+            }
+
+            .card-left-front,
+            .card-right {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .gift-icon {
+                font-size: 60px;
+            }
+
+            .back-content h2 {
+                font-size: 20px;
+            }
+
+            .back-content p {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card-wrapper" id="cardWrapper">
+            <div class="card" id="card">
+                <!-- Left half - Front Cover (opens on right) -->
+                <div class="card-left id="cardLeft">
+                    <!--front side-->
+                    <div class="card-left-front">
+                    <div class="front-content">
+                        <div class="gift-icon">
+                            <img src="./assets/weimaraner.png" alt="gift-icon-dog" width="30%" height="30%">
+                        </div>
+                        <h1>MERRY<br>CHRISTMAS</h1>
+                        <p class="click-hint">✨ Click to open ✨</p>
+                    </div>
+                    </div>
+                    <!--back side-->
+                    <div class="card-left-back">
+                        <img src="./assets/lion.png" alt="lion" class="gift-card-image">
+                    </div>
+                </div>
+                <!-- Right half - Inside (always visible) -->
+                <div class="card-right">
+                <div class="card-right-inside">
+                    <div class="card-spine"></div>
+                    <div class="back-content">
+                        <h2>Merry Christmas!</h2>
+                        <p>Enjoy your holidays
+                        </p>
+                        
+                        <div class="gift-preview">
+                            <div class="gift-preview-icon">🎉</div>
+                            <div class="gift-preview-text">
+                                <div class="label">Your gift</div>
+                                <div class="value">Merry Christmas - Special Edition Gift Card</div>
+                            </div>
+                        </div>
+
+                        <div class="gift-preview">
+                            <div class="gift-preview-icon">🎫</div>
+                            <div class="gift-preview-text">
+                                <div class="label">Get the card</div>
+                                <div class="value"><a href="./gift/gift.txt" download="gift.txt" style="color:var(--color-primary)">Download</a></div>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; margin-top: 10px; color: var(--color-secondary);">Best wishes! 🌟</p>
+                        <p style="font-size: 10px; color: var(--color-secondary);">by Albane Keraudren-Riguidel</p>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const card = document.getElementById('card');
+        const cardWrapper = document.getElementById('cardWrapper');
+
+        cardWrapper.addEventListener('click', function() {
+            card.classList.toggle('opened');
+        });
+
+        // Create snowflakes
+        function createSnowflake() {
+            const snowflake = document.createElement('div');
+            snowflake.classList.add('snowflake');
+            snowflake.textContent = '❄';
+            snowflake.style.left = Math.random() * window.innerWidth + 'px';
+            const duration = Math.random() * 3 + 5; // 5-8 seconds
+            snowflake.style.animationDuration = duration + 's';
+            snowflake.style.animationDelay = Math.random() * 2 + 's';
+            
+            document.body.appendChild(snowflake);
+            
+            setTimeout(() => snowflake.remove(), (duration + 2) * 1000);
+        }
+
+        // Create snowflakes periodically
+        setInterval(createSnowflake, 400);
+
+        // Create initial snowflakes
+        for (let i = 0; i < 5; i++) {
+            setTimeout(createSnowflake, i * 200);
+        }
+    </script>
+</body>
+</html>
